@@ -9,8 +9,6 @@ This repo is for research and development of data on pipeline safety records and
 
 ## Enforcement action comparison by presidential administration
 
-[![Project google document](https://docs.google.com/document/d/1zI0ypmtAf7wzKFqI9eFujxPWl99844vyxR_uy5kX0eE/edit?usp=sharing)
-
 ## License & Copyright
 
 Copyright (C) <year> Environmental Data and Governance Initiative (EDGI)
