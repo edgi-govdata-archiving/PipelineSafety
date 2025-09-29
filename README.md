@@ -3,6 +3,13 @@
 # Pipeline Safety and Enforcement Analysis
 This repo is for research and development of data on pipeline safety records and enforcement actions.
 
+## Facilities, parent companies, financial records
+
+## PDF Analysis - scraping PDF files, NLTK/AI extraction of event locations
+
+## Enforcement action comparison by presidential administration
+
+[![Project google document](https://docs.google.com/document/d/1zI0ypmtAf7wzKFqI9eFujxPWl99844vyxR_uy5kX0eE/edit?usp=sharing)
 
 ## License & Copyright
 
