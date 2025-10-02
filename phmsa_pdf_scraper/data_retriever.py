@@ -42,7 +42,11 @@ for i, case in enumerate(cases, start=1):
         print(f"[{i}/{len(cases)}] Retrieved {cpf}: {len(detail_json["result"]["pageContext"]["caseDocuments"])} documents to download")
         # Access list of case documents and download each one into folder.
         for document_info in detail_json["result"]["pageContext"]["caseDocuments"]:
-            download_pdf(PDF_URL.format(cpf, document_info["name"]), Path("phmsa_pdfs") / cpf / document_info["name"])
+            try:
+                download_pdf(PDF_URL.format(cpf, document_info["name"]), Path("phmsa_pdfs") / cpf / document_info["name"])
+                print(f"   Downloaded {document_info['name']}")
+            except Exception as e:
+                print(f"   Failed {document_info['name']}: {e}")
     except Exception as e:
         print(f"[{i}/{len(cases)}] Failed {cpf}: {e}")
     time.sleep(0.2)  # delay in case endpoint is unhappy with frequency of requests

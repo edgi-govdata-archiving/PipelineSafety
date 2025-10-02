@@ -10,14 +10,18 @@ headers = {
     "User-Agent": "Mozilla/5.0 (compatible; MyScraper/1.0)"
 }
 
-def download_pdf(url, filepath):
+def download_pdf(url, filepath, overwrite=False):
     filepath = Path(filepath)
     filepath.parent.mkdir(parents=True, exist_ok=True)
+    if filepath.exists() and not overwrite:
+        print(f"   Skipping existing PDF: {filepath.name}")
+        return
     with requests.get(url, headers=headers, stream=True) as r:
         r.raise_for_status()
         with open(filepath, "wb") as f:
             for chunk in r.iter_content(chunk_size=8192):
                 f.write(chunk)
+    print(f"   Downloaded: {filepath.name}")
 
 # Step 1: Fetch the list of cases
 resp = requests.get(LIST_URL, headers=headers, timeout=15)
@@ -29,6 +33,8 @@ print(f"Found {len(cases)} cases to check for missing PDFs")
 
 # Global choice: skip cases with existing folders?
 skip_existing = input("Skip cases that already have a folder? (Y/N): ").strip().lower() == "y"
+# Ask user if they want to overwrite existing PDFs
+overwrite_existing = input("Replace existing PDFs if they exist? (Y/N): ").strip().lower() == "y"
 
 # Step 2: Loop through cases and re-download missing PDFs
 for i, case in enumerate(cases, start=1):
@@ -57,8 +63,7 @@ for i, case in enumerate(cases, start=1):
             for doc in missing:
                 pdf_url = PDF_URL.format(cpf, doc["name"])
                 try:
-                    download_pdf(pdf_url, case_folder / doc["name"])
-                    print(f"   Downloaded {doc['name']}")
+                    download_pdf(pdf_url, case_folder / doc["name"], overwrite=overwrite_existing)
                 except Exception as e:
                     print(f"   Failed {doc['name']}: {e}")
                 time.sleep(0.2)
