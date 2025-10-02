@@ -1,14 +1,17 @@
 import pandas as pd
 import os
 import re
-import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
 from pypdf import PdfReader
 from geotext import GeoText
+
 
 # load data
 phmsa = pd.read_csv(r"phmsa_enforcement_accident\PHMSA_Raw_Data.csv")
 
-#define criteria for Corrective_Action_Order_Ind = YES
+#define criteria for cases with Corrective_Action_Order
 CAO = phmsa[phmsa["Corrective_Action_Order_Ind"] == "Yes"]
 
 # extract the text before first hyphen
@@ -19,15 +22,80 @@ material_counts = CAO["Material"].value_counts()
 
 print(material_counts)
 
-print(CAO.shape)
-
-print(85+54+1)
+#define the criteria for cases with incident reports (and therefore location data)
 
 incident_reports = phmsa[phmsa["Report_Type"] == "Incident Report"]
 
 print(incident_reports)
 
+#plot cases with incident reports by type over time 
+# summarize penalty data by year and case type
 
+penalties_ir = incident_reports[['Opened_Year','CPF_Number','Case_Type','Proposed_Penalties','Assessed_Penalties']].groupby(['Opened_Year','Case_Type']).sum()[['Proposed_Penalties','Assessed_Penalties']]
+penalties_ir['num_cases'] = incident_reports.groupby(['Opened_Year','Case_Type']).count().rename(columns={'CPF_Number':'num_cases'})['num_cases']
+penalties_ir
+
+penalties_ir.loc[penalties_ir['Proposed_Penalties'] > 0.0].index 
+
+#plot 
+plt.figure()
+g = sns.FacetGrid(penalties_ir['num_cases'].reset_index(['Opened_Year','Case_Type']), col='Case_Type', hue='Case_Type')
+g.map(sns.lineplot, 'Opened_Year', 'num_cases')
+
+plt.show()
+
+#plot the top ten operators by number of penalties with incident reports
+
+#create a df summarizing the penalties by operator 
+penalty_by_owner_ir = incident_reports.groupby('Operator_Name').sum()[['Proposed_Penalties', 'Assessed_Penalties','Collected_Penalties']]
+cases_by_owner_ir = incident_reports.groupby('Operator_Name').count()[['Proposed_Penalties']].rename(columns={'Proposed_Penalties':'Number_of_Penalties'})
+penalty_by_owner_ir = penalty_by_owner_ir.merge(cases_by_owner_ir, on='Operator_Name')
+
+# keep Operator_Name in columns
+plot_data = penalty_by_owner_ir.sort_values(by='Number_of_Penalties', ascending=False).head(10)
+
+plot_data = (
+    plot_data.rename(columns={
+        'Proposed_Penalties': 'Proposed',
+        'Assessed_Penalties': 'Assessed',
+        'Collected_Penalties': 'Collected',
+        'Number_of_Penalties': 'Number'
+    })
+    .reset_index() 
+    .reindex(columns=['Operator_Name','Proposed','Assessed','Collected'])
+)
+
+plot_data.columns.name = 'penalty_type'
+
+# organize data
+plot_data = plot_data.melt(id_vars="Operator_Name", 
+                           var_name="penalty_type", 
+                           value_name="value")
+plot_data['value'] = plot_data['value'].astype(int)
+
+# plot
+plt.figure()
+fig, ax = plt.subplots(figsize=(4, 7))
+sns.barplot(
+    data=plot_data,
+    x='Operator_Name',
+    y='value',
+    hue='penalty_type',
+    ax=ax
+)
+
+ax.set_ylabel('Penalty Amount, Dollars', fontsize=14)
+ax.set_xlabel('',fontsize=14)
+fig.suptitle('Penalties by Operator for Cases with Incident Reports\nTop 10 Operators Ranked by Number of Penalty Cases')
+ax.ticklabel_format(style='plain', axis='y')
+ax.tick_params(axis='x', labelrotation=90)
+plt.legend(title='Penalty Type')
+plt.tight_layout()
+plt.show()
+
+#plots show up a little clunky in vscode... have to work on this!
+
+#load pdfs after scraping here - could use the data frames above to filter for pdfs of interest after scraping
 
 US_STATES = [
     "Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut","Delaware",
@@ -105,6 +173,6 @@ def process_pdfs_in_folder(folder_path):
 folder = r"phmsa_enforcement_accident\pdf"
 df = process_pdfs_in_folder(folder)
 print(df)
-# optional: df.to_csv("inspected_locations.csv", index=False)
+#df.to_csv("inspected_locations.csv", index=False)
 
 
