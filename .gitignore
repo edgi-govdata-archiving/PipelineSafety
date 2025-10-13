@@ -1,2 +1,3 @@
 phmsa_pdfs/
 *.zip
+.venv
