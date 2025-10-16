@@ -2,3 +2,7 @@ phmsa_pdfs/
 *.zip
 .venv
 *.xlsx
+.vscode/settings.json
+# Allow the two xlsx files below this, in case others want to help.
+!VT_PHMSA_parentchanged_only.xlsx
+!VT_PHMSA_parentchanged_with_dates.xlsx
