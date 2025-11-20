@@ -4,6 +4,14 @@ on:
   schedule:
     - cron: "0 2 * * *"
   workflow_dispatch:       # allows manual runs
+  push:
+    branches:
+      - "daily_image_generator_test"
+  pull_request:
+    branches:
+      - "main" 
+    paths:
+      - ".github/workflows/daily_data_retriever.toml"
 
 permissions:
   contents: write
