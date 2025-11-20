@@ -26,10 +26,10 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run data ingestion script
-        run: python ./workflows/retrieve_phmsa_raw_data.py
+        run: python .github/workflows/retrieve_phmsa_raw_data.py
 
       - name: Run analysis / image generation
-        run: python ./phmsa_enforcement_analysis/phmsa_enforcement_analysis.py
+        run: python phmsa_enforcement_analysis/phmsa_enforcement_analysis.py
 
       - name: Commit and push generated files
         run: |
