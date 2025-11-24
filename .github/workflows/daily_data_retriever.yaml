@@ -1,0 +1,40 @@
+name: Daily Data Pipeline
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:       # allows manual runs
+
+permissions:
+  contents: write
+
+jobs:
+  run-scripts:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run data ingestion script
+        run: python .github/workflows/retrieve_phmsa_raw_data.py
+
+      - name: Run analysis / image generation
+        run: python phmsa_enforcement_analysis/phmsa_enforcement_analysis.py
+
+      - name: Commit and push generated files
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add .
+          git commit -m "Automated update from workflow" || echo "No changes to commit"
+          git push

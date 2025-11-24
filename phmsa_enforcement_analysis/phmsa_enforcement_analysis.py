@@ -2,12 +2,24 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import calendar
+import os
+
+output_dir = os.path.join("phmsa_enforcement_analysis", "Images")
+# Create Images folder if it doesn't exist
+os.makedirs(output_dir, exist_ok=True)
+
+def save_plt_as_image(plt_title):
+    # Remove unsafe filename characters
+    safe_title = "".join(c for c in plt_title if c.isalnum() or c in " _-")
+    output_path = os.path.join(output_dir, safe_title + ".png")
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
+    print(f"Saved '{safe_title}' image to: {output_path}")
 
 # ------------------------------
 # LOAD DATA
 # ------------------------------
 phmsa = pd.read_csv(
-    r"Data/PHMSA Pipeline Enforcement Raw Data.txt",
+    r"phmsa_enforcement_analysis/Data/PHMSA Pipeline Enforcement Raw Data.txt",
     sep="\t",
     encoding="latin1"
 )
@@ -69,11 +81,13 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt.title("PHMSA Enforcement Cases Opened: First 10 Months of Term")
+plt_title = "PHMSA Enforcement Cases Opened: First 10 Months of Term"
+plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Number of Cases Opened")
 plt.xticks(range(1, 11), labels=month_labels)
 plt.ylim(0, None)
+save_plt_as_image(plt_title)
 plt.show()
 
 # ------------------------------
@@ -94,11 +108,13 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt.title("PHMSA Collected Penalties: First 10 Months of Term")
+plt_title = "PHMSA Collected Penalties: First 10 Months of Term"
+plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Total Collected Penalties ($)")
 plt.xticks(range(1, 11), labels=month_labels)
 plt.ylim(0, None)
+save_plt_as_image(plt_title)
 plt.show()
 
 # ------------------------------
@@ -142,8 +158,10 @@ for ax, pres in zip(axes, ["Biden 2021", "Trump 2025"]):
     ax.set_ylim(0, None)
     ax.legend(title="Penalty Type")
 
-plt.suptitle("Monthly Penalties: Proposed, Assessed, Collected", fontsize=16)
+plt_title = "Monthly Penalties: Proposed, Assessed, Collected"
+plt.suptitle(plt_title, fontsize=16)
 plt.tight_layout(rect=[0,0,1,0.95])
+save_plt_as_image(plt_title)
 plt.show()
 
 #------------------------------------------------------------------------------------
@@ -187,7 +205,8 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt.title("PHMSA Cases with Incident Reports: First 10 Months of Term")
+plt_title = "PHMSA Cases with Incident Reports: First 10 Months of Term"
+plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Number of Cases")
 plt.xticks(ticks=range(1, 11), labels=month_labels)
