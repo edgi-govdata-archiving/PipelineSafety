@@ -211,6 +211,7 @@ plt.xlabel("Month")
 plt.ylabel("Number of Cases")
 plt.xticks(ticks=range(1, 11), labels=month_labels)
 plt.ylim(0, None)
+save_plt_as_image(plt_title)
 plt.show()
 
 # ------------------------------
@@ -237,11 +238,13 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt.title("PHMSA Collected Penalties (Cumulative): First 10 Months of Term")
+plt_title = "PHMSA Collected Penalties (Cumulative): First 10 Months of Term"
+plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Cumulative Collected Penalties ($)")
 plt.xticks(range(1, 11), labels=month_labels)
 plt.ylim(0, None)
+save_plt_as_image(plt_title)
 plt.show()
 
 #---------------------------------
@@ -268,11 +271,13 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt.title("PHMSA Enforcement Cases Opened (Cumulative): First 10 Months of Term")
+plt_title = "PHMSA Enforcement Cases Opened (Cumulative): First 10 Months of Term"
+plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Number of Cases Opened (Cumulative)")
 plt.xticks(range(1, 11), labels=month_labels)
 plt.ylim(0, None)
+save_plt_as_image(plt_title)
 plt.show()
 
 #------------------------------------------------------------------------------------
@@ -322,11 +327,13 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt.title("PHMSA Cases with Incident Reports (Cumulative): First 10 Months of Term")
+plt_title = "PHMSA Cases with Incident Reports (Cumulative): First 10 Months of Term"
+plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Cumulative Number of Incident Reports")
 plt.xticks(ticks=range(1, 11), labels=month_labels)
 plt.ylim(0, None)
+save_plt_as_image(plt_title)
 plt.show()
 
 # ------------------------------
@@ -386,6 +393,8 @@ for ax, pres in zip(axes, ["Biden 2021", "Trump 2025"]):
     ax.set_ylim(0, None)
     ax.legend(title="Penalty Type")
 
-plt.suptitle("Cumulative Penalties: Proposed, Assessed, Collected", fontsize=16)
+plt_title = "Cumulative Penalties: Proposed, Assessed, Collected"
+plt.suptitle(plt_title, fontsize=16)
 plt.tight_layout(rect=[0,0,1,0.95])
+save_plt_as_image(plt_title)
 plt.show()
