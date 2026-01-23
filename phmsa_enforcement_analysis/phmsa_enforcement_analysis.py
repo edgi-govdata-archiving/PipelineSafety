@@ -25,7 +25,7 @@ phmsa = pd.read_csv(
 )
 
 # Convert Opened_Date to datetime
-phmsa["Opened_Date"] = pd.to_datetime(phmsa["Opened_Date"], infer_datetime_format=True, errors="coerce")
+phmsa["Opened_Date"] = pd.to_datetime(phmsa["Opened_Date"], errors="coerce")
 
 # Extract year and month
 phmsa["Year"] = phmsa["Opened_Date"].dt.year
