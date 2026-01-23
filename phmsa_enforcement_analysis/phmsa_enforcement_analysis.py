@@ -64,7 +64,7 @@ stacked_ordered.plot(
     colormap="crest"
 )
 
-plt.title("Total Annual PHMSA Enforcement Cases by Case Type")
+plt.title("Total Annual PHMSA Enforcement Cases (with Case Type)")
 plt.xlabel("Year")
 plt.ylabel("Number of Cases")
 plt.legend(title="Case Type", bbox_to_anchor=(1.02, 1), loc="upper left")
