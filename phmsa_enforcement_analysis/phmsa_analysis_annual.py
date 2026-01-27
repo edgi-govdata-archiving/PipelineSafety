@@ -27,6 +27,8 @@ phmsa = pd.read_csv(
     encoding="latin1"
 )
 
+# CASES PER YEAR BY CASE TYPE
+
 phmsa["Opened_Date"] = pd.to_datetime(phmsa["Opened_Date"])
 
 
@@ -72,3 +74,34 @@ plt.tight_layout()
 save_plt_as_image(plt.gca().get_title())
 
 plt.show()
+
+# CASES PER YEAR WITH INSPECTION REPORTS
+
+indicent_counts = (
+    phmsa
+    .groupby(["Year", "Report_Type"])
+    .size()
+    .reset_index(name="Count")
+)
+
+incident_counts_years = (
+    indicent_counts
+    .pivot(index="Year", columns="Report_Type", values="Count")
+    .fillna(0)
+)
+
+incident_counts_years.plot(
+    kind="bar",
+    figsize=(11, 6),
+    colormap="crest"
+)
+
+plt.title("Total Annual PHMSA Enforcement Cases with Incident Reports")
+plt.xlabel("Year")
+plt.ylabel("Number of Cases with Incident Reports")
+plt.legend(title="Incident Reports", bbox_to_anchor=(1.02, 1), loc="upper left")
+plt.tight_layout()
+save_plt_as_image(plt.gca().get_title())
+
+plt.show()
+
