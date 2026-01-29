@@ -33,9 +33,14 @@ phmsa["Month"] = phmsa["Opened_Date"].dt.month
 
 # ------------------------------
 # DEFINE ADMIN PERIODS
-# ------------------------------
-biden_start, biden_end = pd.Timestamp("2021-01-20"), pd.Timestamp("2021-10-31")
-trump_start, trump_end = pd.Timestamp("2025-01-20"), pd.Timestamp("2025-10-31")
+# ------------------------------'
+# latest_date is dependent on latest available data.
+latest_date = phmsa["Opened_Date"].max()
+current_inauguration = pd.Timestamp("2025-01-20")
+start_period = current_inauguration.to_period("M")
+end_period = latest_date.to_period("M")
+biden_start, biden_end = pd.Timestamp("2021-01-20"), pd.Timestamp(year=latest_date.year - 4, month=latest_date.month, day=1) + pd.offsets.MonthEnd(0)
+trump_start, trump_end = current_inauguration, pd.Timestamp(year=latest_date.year, month=latest_date.month, day=1) + pd.offsets.MonthEnd(0)
 
 # Filter
 phmsa_biden = phmsa[(phmsa["Opened_Date"] >= biden_start) & (phmsa["Opened_Date"] <= biden_end)].copy()
@@ -51,14 +56,16 @@ phmsa_filtered = pd.concat([phmsa_biden, phmsa_trump], ignore_index=True)
 # ------------------------------
 # SETTINGS
 # ------------------------------
+num_months = (end_period - start_period).n + 1
+month_range = range(1, num_months + 1)
 custom_palette = {"Biden 2021": "#1f77b4", "Trump 2025": "#d62728"}
-month_labels = [f"{i}\n{calendar.month_abbr[i]}" for i in range(1, 11)]
+month_labels = [f"{i}\n{calendar.month_abbr[i]}" for i in month_range]
 
 # ------------------------------
 # HELPER TO FILL MISSING MONTHS
 # ------------------------------
 def add_missing_months(df, value_col):
-    months = pd.DataFrame({"Month": range(1, 11)})
+    months = pd.DataFrame({"Month": month_range})
     df = months.merge(df, on="Month", how="left").fillna({value_col: 0})
     return df
 
@@ -81,11 +88,11 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt_title = "PHMSA Enforcement Cases Opened: First 10 Months of Term"
+plt_title = f"PHMSA Enforcement Cases Opened: First {num_months} Months of Term"
 plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Number of Cases Opened")
-plt.xticks(range(1, 11), labels=month_labels)
+plt.xticks(month_range, labels=month_labels)
 plt.ylim(0, None)
 save_plt_as_image(plt_title)
 plt.show()
@@ -108,11 +115,11 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt_title = "PHMSA Collected Penalties: First 10 Months of Term"
+plt_title = f"PHMSA Collected Penalties: First {num_months} Months of Term"
 plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Total Collected Penalties ($)")
-plt.xticks(range(1, 11), labels=month_labels)
+plt.xticks(month_range, labels=month_labels)
 plt.ylim(0, None)
 save_plt_as_image(plt_title)
 plt.show()
@@ -124,7 +131,7 @@ penalties = phmsa_filtered.groupby(["President", "Month"])[["Proposed_Penalties"
 
 # Ensure missing months are zero
 def fill_penalty_months(df, president):
-    months = pd.DataFrame({"Month": range(1, 11)})
+    months = pd.DataFrame({"Month": month_range})
     df = months.merge(df, on="Month", how="left").fillna(0)
     df["President"] = president
     return df
@@ -149,10 +156,11 @@ for ax, pres in zip(axes, ["Biden 2021", "Trump 2025"]):
         y="Amount",
         hue="Penalty_Type",
         marker="o",
-        ax=ax
+        ax=ax,
+        #clip_on=False
     )
     ax.set_title(pres)
-    ax.set_xticks(range(1, 11))
+    ax.set_xticks(month_range)
     ax.set_xticklabels(month_labels)
     ax.set_ylabel("Penalty Amount ($)")
     ax.set_ylim(0, None)
@@ -177,8 +185,8 @@ monthly_cases = (
     .reset_index(name="Cases")
 )
 
-# Ensure all months 1–10 are represented
-all_months = pd.DataFrame({"Month": range(1, 11)})
+# Ensure all months are represented
+all_months = pd.DataFrame({"Month": month_range})
 filled_cases_list = []
 
 for president, year in [("Biden 2021", 2021), ("Trump 2025", 2025)]:
@@ -195,7 +203,7 @@ filled_cases = pd.concat(filled_cases_list, ignore_index=True)
 # PLOT INCIDENT REPORTS
 # ------------------------------
 custom_palette = {"Biden 2021": "#1f77b4", "Trump 2025": "#d62728"}
-month_labels = [f"{i}\n{calendar.month_abbr[i]}" for i in range(1, 11)]
+month_labels = [f"{i}\n{calendar.month_abbr[i]}" for i in month_range]
 
 sns.lineplot(
     data=filled_cases,
@@ -205,11 +213,11 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt_title = "PHMSA Cases with Incident Reports: First 10 Months of Term"
+plt_title = f"PHMSA Cases with Incident Reports: First {num_months} Months of Term"
 plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Number of Cases")
-plt.xticks(ticks=range(1, 11), labels=month_labels)
+plt.xticks(ticks=month_range, labels=month_labels)
 plt.ylim(0, None)
 save_plt_as_image(plt_title)
 plt.show()
@@ -238,11 +246,11 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt_title = "PHMSA Collected Penalties (Cumulative): First 10 Months of Term"
+plt_title = f"PHMSA Collected Penalties (Cumulative): First {num_months} Months of Term"
 plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Cumulative Collected Penalties ($)")
-plt.xticks(range(1, 11), labels=month_labels)
+plt.xticks(month_range, labels=month_labels)
 plt.ylim(0, None)
 save_plt_as_image(plt_title)
 plt.show()
@@ -271,11 +279,11 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt_title = "PHMSA Enforcement Cases Opened (Cumulative): First 10 Months of Term"
+plt_title = f"PHMSA Enforcement Cases Opened (Cumulative): First {num_months} Months of Term"
 plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Number of Cases Opened (Cumulative)")
-plt.xticks(range(1, 11), labels=month_labels)
+plt.xticks(month_range, labels=month_labels)
 plt.ylim(0, None)
 save_plt_as_image(plt_title)
 plt.show()
@@ -293,8 +301,8 @@ monthly_cases = (
     .reset_index(name="Cases")
 )
 
-# Ensure all months 1–10 are represented
-all_months = pd.DataFrame({"Month": range(1, 11)})
+# Ensure all months are represented
+all_months = pd.DataFrame({"Month": month_range})
 filled_cases_list = []
 
 for president, year in [("Biden 2021", 2021), ("Trump 2025", 2025)]:
@@ -317,7 +325,7 @@ filled_cases["Cumulative_Incidents"] = (
 # PLOT CUMULATIVE INCIDENT REPORTS
 # ------------------------------
 custom_palette = {"Biden 2021": "#1f77b4", "Trump 2025": "#d62728"}
-month_labels = [f"{i}\n{calendar.month_abbr[i]}" for i in range(1, 11)]
+month_labels = [f"{i}\n{calendar.month_abbr[i]}" for i in month_range]
 
 sns.lineplot(
     data=filled_cases,
@@ -327,11 +335,11 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt_title = "PHMSA Cases with Incident Reports (Cumulative): First 10 Months of Term"
+plt_title = f"PHMSA Cases with Incident Reports (Cumulative): First {num_months} Months of Term"
 plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Cumulative Number of Incident Reports")
-plt.xticks(ticks=range(1, 11), labels=month_labels)
+plt.xticks(ticks=month_range, labels=month_labels)
 plt.ylim(0, None)
 save_plt_as_image(plt_title)
 plt.show()
@@ -350,7 +358,7 @@ penalties = (
 
 # Fill missing months for each president
 def fill_penalty_months(df, president):
-    months = pd.DataFrame({"Month": range(1, 11)})
+    months = pd.DataFrame({"Month": month_range})
     df = months.merge(df, on="Month", how="left").fillna(0)
     df["President"] = president
     return df
@@ -387,7 +395,7 @@ for ax, pres in zip(axes, ["Biden 2021", "Trump 2025"]):
         ax=ax
     )
     ax.set_title(pres)
-    ax.set_xticks(range(1, 11))
+    ax.set_xticks(month_range)
     ax.set_xticklabels(month_labels)
     ax.set_ylabel("Cumulative Penalty Amount ($)")
     ax.set_ylim(0, None)
