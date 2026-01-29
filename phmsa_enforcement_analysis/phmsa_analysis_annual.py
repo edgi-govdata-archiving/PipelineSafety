@@ -4,6 +4,10 @@ import matplotlib.pyplot as plt
 from datetime import date
 import os
 
+#------------------------------
+# SET UP IMAGE EXPORT
+#------------------------------
+
 output_dir = os.path.join("phmsa_enforcement_analysis", "Images")
 # Create Images folder if it doesn't exist
 os.makedirs(output_dir, exist_ok=True)
@@ -14,9 +18,6 @@ def save_plt_as_image(plt_title):
     output_path = os.path.join(output_dir, safe_title + ".png")
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
     print(f"Saved '{safe_title}' image to: {output_path}")
-
-import pandas as pd
-import matplotlib.pyplot as plt
 
 # ------------------------------
 # LOAD DATA
