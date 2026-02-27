@@ -3,8 +3,6 @@ phmsa_pdfs/
 .venv
 *.xlsx
 .vscode/settings.json
-phmsa_enforcement_analysis/Data
-phmsa_enforcement_analysis/Images
 # Allow the two xlsx files below this, in case others want to help.
 !VT_PHMSA_parentchanged_only.xlsx
 !VT_PHMSA_parentchanged_with_dates.xlsx
