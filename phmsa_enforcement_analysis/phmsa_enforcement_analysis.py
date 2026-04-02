@@ -31,20 +31,30 @@ phmsa["Opened_Date"] = pd.to_datetime(phmsa["Opened_Date"], errors="coerce")
 phmsa["Year"] = phmsa["Opened_Date"].dt.year
 phmsa["Month"] = phmsa["Opened_Date"].dt.month
 
-# ------------------------------
-# DEFINE ADMIN PERIODS
-# ------------------------------'
-# latest_date is dependent on latest available data.
 latest_date = phmsa["Opened_Date"].max()
+trump_start = pd.Timestamp("2025-01-20")
+biden_start = pd.Timestamp("2021-01-20")
 current_inauguration = pd.Timestamp("2025-01-20")
 start_period = current_inauguration.to_period("M")
 end_period = latest_date.to_period("M")
-biden_start, biden_end = pd.Timestamp("2021-01-20"), pd.Timestamp(year=latest_date.year - 4, month=latest_date.month, day=1) + pd.offsets.MonthEnd(0)
-trump_start, trump_end = current_inauguration, pd.Timestamp(year=latest_date.year, month=latest_date.month, day=1) + pd.offsets.MonthEnd(0)
+custom_palette = {"Biden 2021": "#1f77b4", "Trump 2025": "#d62728"}
+
+num_months = (latest_date.year - trump_start.year) * 12 + (latest_date.month - trump_start.month) + 1
+
+# 3. Define the end dates using the same monthly offset
+# Using MonthEnd ensures we capture all data up to the end of the current reporting month
+trump_end = trump_start + pd.DateOffset(months=num_months - 1) + pd.offsets.MonthEnd(0)
+biden_end = biden_start + pd.DateOffset(months=num_months - 1) + pd.offsets.MonthEnd(0)
 
 # Filter
 phmsa_biden = phmsa[(phmsa["Opened_Date"] >= biden_start) & (phmsa["Opened_Date"] <= biden_end)].copy()
 phmsa_trump = phmsa[(phmsa["Opened_Date"] >= trump_start) & (phmsa["Opened_Date"] <= trump_end)].copy()
+
+phmsa_biden["Month"] = ((phmsa_biden["Opened_Date"].dt.year - biden_start.year) * 12 + 
+                        (phmsa_biden["Opened_Date"].dt.month - biden_start.month) + 1)
+
+phmsa_trump["Month"] = ((phmsa_trump["Opened_Date"].dt.year - trump_start.year) * 12 + 
+                        (phmsa_trump["Opened_Date"].dt.month - trump_start.month) + 1)
 
 # Add president labels
 phmsa_biden["President"] = "Biden 2021"
@@ -56,10 +66,12 @@ phmsa_filtered = pd.concat([phmsa_biden, phmsa_trump], ignore_index=True)
 # ------------------------------
 # SETTINGS
 # ------------------------------
-num_months = (end_period - start_period).n + 1
 month_range = range(1, num_months + 1)
-custom_palette = {"Biden 2021": "#1f77b4", "Trump 2025": "#d62728"}
-month_labels = [f"{i}\n{calendar.month_abbr[i]}" for i in month_range]
+# Create dynamic labels (e.g., "1 Jan", "2 Feb"...)
+month_labels = []
+for i in month_range:
+    month_idx = (trump_start.month + i - 2) % 12 + 1
+    month_labels.append(f"{i}\n{calendar.month_abbr[month_idx]}")
 
 # ------------------------------
 # HELPER TO FILL MISSING MONTHS
@@ -203,7 +215,6 @@ filled_cases = pd.concat(filled_cases_list, ignore_index=True)
 # PLOT INCIDENT REPORTS
 # ------------------------------
 custom_palette = {"Biden 2021": "#1f77b4", "Trump 2025": "#d62728"}
-month_labels = [f"{i}\n{calendar.month_abbr[i]}" for i in month_range]
 
 sns.lineplot(
     data=filled_cases,
@@ -325,7 +336,6 @@ filled_cases["Cumulative_Incidents"] = (
 # PLOT CUMULATIVE INCIDENT REPORTS
 # ------------------------------
 custom_palette = {"Biden 2021": "#1f77b4", "Trump 2025": "#d62728"}
-month_labels = [f"{i}\n{calendar.month_abbr[i]}" for i in month_range]
 
 sns.lineplot(
     data=filled_cases,
