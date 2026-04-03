@@ -205,7 +205,7 @@ for ax, pres in zip(axes, ["Biden 2021", "Trump 2025"]):
     ax.set_xticks(month_range)
     ax.set_xticklabels(month_labels)
     ax.set_ylabel("Penalty Amount ($)")
-    ax.set_ylim(0, None)
+    ax.set_ylim(0, None, auto=True)
     ax.legend(title="Penalty Type")
 
 plt_title = "Monthly Penalties: Proposed, Assessed, Collected"
@@ -438,7 +438,7 @@ for ax, pres in zip(axes, ["Biden 2021", "Trump 2025"]):
     ax.set_xticks(month_range)
     ax.set_xticklabels(month_labels)
     ax.set_ylabel("Cumulative Penalty Amount ($)")
-    ax.set_ylim(0, None)
+    ax.set_ylim(0, None, auto=True)
     ax.legend(title="Penalty Type")
 
 plt_title = "Cumulative Penalties: Proposed, Assessed, Collected"
