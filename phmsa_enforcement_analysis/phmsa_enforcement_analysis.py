@@ -100,7 +100,7 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt_title = f"PHMSA Enforcement Cases Opened: First {num_months} Months of Term"
+plt_title = f"PHMSA Enforcement Cases Opened: Biden 2021 vs Trump 2025"
 plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Number of Cases Opened")
@@ -127,7 +127,7 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt_title = f"PHMSA Collected Penalties: First {num_months} Months of Term"
+plt_title = f"PHMSA Collected Penalties: Biden 2021 vs Trump 2025"
 plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Total Collected Penalties ($)")
@@ -224,7 +224,7 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt_title = f"PHMSA Cases with Incident Reports: First {num_months} Months of Term"
+plt_title = f"PHMSA Cases with Incident Reports: Biden 2021 vs Trump 2025"
 plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Number of Cases")
@@ -257,7 +257,7 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt_title = f"PHMSA Collected Penalties (Cumulative): First {num_months} Months of Term"
+plt_title = f"PHMSA Collected Penalties (Cumulative): Biden 2021 vs Trump 2025"
 plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Cumulative Collected Penalties ($)")
@@ -290,7 +290,7 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt_title = f"PHMSA Enforcement Cases Opened (Cumulative): First {num_months} Months of Term"
+plt_title = f"PHMSA Enforcement Cases Opened (Cumulative): Biden 2021 vs Trump 2025"
 plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Number of Cases Opened (Cumulative)")
@@ -345,7 +345,7 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt_title = f"PHMSA Cases with Incident Reports (Cumulative): First {num_months} Months of Term"
+plt_title = f"PHMSA Cases with Incident Reports (Cumulative): Biden 2021 vs Trump 2025"
 plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Cumulative Number of Incident Reports")
