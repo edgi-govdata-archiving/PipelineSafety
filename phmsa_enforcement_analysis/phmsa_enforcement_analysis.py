@@ -1,4 +1,6 @@
+import matplotlib
 import pandas as pd
+from pyfonts import load_google_font
 import seaborn as sns
 import matplotlib.pyplot as plt
 import calendar
@@ -72,6 +74,34 @@ month_labels = []
 for i in month_range:
     month_idx = (trump_start.month + i - 2) % 12 + 1
     month_labels.append(f"{i}\n{calendar.month_abbr[month_idx]}")
+
+# Simple list versions of the gradients, which we can use for seaborn color palettes:
+bicolor_standard_list = ["#19659e", "#dbbe48", "#A74956"]
+sns.set_theme(style="whitegrid", palette=bicolor_standard_list)
+    
+# ------------------------------
+# FONT SETTINGS
+# ------------------------------
+
+# Get Mona Sans font from Google Fonts. 
+# URL: https://fonts.google.com/specimen/Mona+Sans
+font_path_regular = load_google_font("Mona Sans", weight='regular')
+font_path_bold = load_google_font("Mona Sans", weight='bold')
+matplotlib.font_manager.fontManager.addfont(font_path_regular.get_file())
+matplotlib.font_manager.fontManager.addfont(font_path_bold.get_file())
+
+# Helper function to set matplotlib fonts to our chosen font. This needs to be called AFTER sns.set_theme() is called,
+# hence this helper function to make that quick every time we graph something.
+def set_matplotlib_font(style = "regular"):
+    plt.rcParams["font.family"] = 'sans-serif'
+    if style == "regular":
+        plt.rcParams["font.sans-serif"] = font_path_regular.get_name()
+        sns.set_context("notebook", rc={"font.family": font_path_regular.get_name()})
+    elif style == "bold":
+        plt.rcParams["font.sans-serif"] = font_path_bold.get_name()
+        sns.set_context("notebook", rc={"font.family": font_path_bold.get_name()})
+
+set_matplotlib_font("regular")
 
 # ------------------------------
 # HELPER TO FILL MISSING MONTHS
