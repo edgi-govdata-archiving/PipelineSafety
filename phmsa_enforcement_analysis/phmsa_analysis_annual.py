@@ -78,7 +78,7 @@ plt.show()
 
 # CASES PER YEAR WITH INSPECTION REPORTS
 
-indicent_counts = (
+incident_counts = (
     phmsa
     .groupby(["Year", "Report_Type"])
     .size()
@@ -86,7 +86,7 @@ indicent_counts = (
 )
 
 incident_counts_years = (
-    indicent_counts
+    incident_counts
     .pivot(index="Year", columns="Report_Type", values="Count")
     .fillna(0)
 )

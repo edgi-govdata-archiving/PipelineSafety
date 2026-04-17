@@ -1,4 +1,6 @@
+import matplotlib
 import pandas as pd
+from pyfonts import load_google_font
 import seaborn as sns
 import matplotlib.pyplot as plt
 import calendar
@@ -31,20 +33,30 @@ phmsa["Opened_Date"] = pd.to_datetime(phmsa["Opened_Date"], errors="coerce")
 phmsa["Year"] = phmsa["Opened_Date"].dt.year
 phmsa["Month"] = phmsa["Opened_Date"].dt.month
 
-# ------------------------------
-# DEFINE ADMIN PERIODS
-# ------------------------------'
-# latest_date is dependent on latest available data.
 latest_date = phmsa["Opened_Date"].max()
+trump_start = pd.Timestamp("2025-01-20")
+biden_start = pd.Timestamp("2021-01-20")
 current_inauguration = pd.Timestamp("2025-01-20")
 start_period = current_inauguration.to_period("M")
 end_period = latest_date.to_period("M")
-biden_start, biden_end = pd.Timestamp("2021-01-20"), pd.Timestamp(year=latest_date.year - 4, month=latest_date.month, day=1) + pd.offsets.MonthEnd(0)
-trump_start, trump_end = current_inauguration, pd.Timestamp(year=latest_date.year, month=latest_date.month, day=1) + pd.offsets.MonthEnd(0)
+custom_palette = {"Biden 2021": "#1f77b4", "Trump 2025": "#d62728"}
+
+num_months = (latest_date.year - trump_start.year) * 12 + (latest_date.month - trump_start.month) + 1
+
+# 3. Define the end dates using the same monthly offset
+# Using MonthEnd ensures we capture all data up to the end of the current reporting month
+trump_end = trump_start + pd.DateOffset(months=num_months - 1) + pd.offsets.MonthEnd(0)
+biden_end = biden_start + pd.DateOffset(months=num_months - 1) + pd.offsets.MonthEnd(0)
 
 # Filter
 phmsa_biden = phmsa[(phmsa["Opened_Date"] >= biden_start) & (phmsa["Opened_Date"] <= biden_end)].copy()
 phmsa_trump = phmsa[(phmsa["Opened_Date"] >= trump_start) & (phmsa["Opened_Date"] <= trump_end)].copy()
+
+phmsa_biden["Month"] = ((phmsa_biden["Opened_Date"].dt.year - biden_start.year) * 12 + 
+                        (phmsa_biden["Opened_Date"].dt.month - biden_start.month) + 1)
+
+phmsa_trump["Month"] = ((phmsa_trump["Opened_Date"].dt.year - trump_start.year) * 12 + 
+                        (phmsa_trump["Opened_Date"].dt.month - trump_start.month) + 1)
 
 # Add president labels
 phmsa_biden["President"] = "Biden 2021"
@@ -56,10 +68,40 @@ phmsa_filtered = pd.concat([phmsa_biden, phmsa_trump], ignore_index=True)
 # ------------------------------
 # SETTINGS
 # ------------------------------
-num_months = (end_period - start_period).n + 1
 month_range = range(1, num_months + 1)
-custom_palette = {"Biden 2021": "#1f77b4", "Trump 2025": "#d62728"}
-month_labels = [f"{i}\n{calendar.month_abbr[i]}" for i in month_range]
+# Create dynamic labels (e.g., "1 Jan", "2 Feb"...)
+month_labels = []
+for i in month_range:
+    month_idx = (trump_start.month + i - 2) % 12 + 1
+    month_labels.append(f"{i}\n{calendar.month_abbr[month_idx]}")
+
+# Simple list versions of the gradients, which we can use for seaborn color palettes:
+bicolor_standard_list = ["#19659e", "#dbbe48", "#A74956"]
+sns.set_theme(style="whitegrid", palette=bicolor_standard_list)
+    
+# ------------------------------
+# FONT SETTINGS
+# ------------------------------
+
+# Get Mona Sans font from Google Fonts. 
+# URL: https://fonts.google.com/specimen/Mona+Sans
+font_path_regular = load_google_font("Mona Sans", weight='regular')
+font_path_bold = load_google_font("Mona Sans", weight='bold')
+matplotlib.font_manager.fontManager.addfont(font_path_regular.get_file())
+matplotlib.font_manager.fontManager.addfont(font_path_bold.get_file())
+
+# Helper function to set matplotlib fonts to our chosen font. This needs to be called AFTER sns.set_theme() is called,
+# hence this helper function to make that quick every time we graph something.
+def set_matplotlib_font(style = "regular"):
+    plt.rcParams["font.family"] = 'sans-serif'
+    if style == "regular":
+        plt.rcParams["font.sans-serif"] = font_path_regular.get_name()
+        sns.set_context("notebook", rc={"font.family": font_path_regular.get_name()})
+    elif style == "bold":
+        plt.rcParams["font.sans-serif"] = font_path_bold.get_name()
+        sns.set_context("notebook", rc={"font.family": font_path_bold.get_name()})
+
+set_matplotlib_font("regular")
 
 # ------------------------------
 # HELPER TO FILL MISSING MONTHS
@@ -88,7 +130,7 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt_title = f"PHMSA Enforcement Cases Opened: First {num_months} Months of Term"
+plt_title = f"PHMSA Enforcement Cases Opened: Biden 2021 vs Trump 2025"
 plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Number of Cases Opened")
@@ -115,7 +157,7 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt_title = f"PHMSA Collected Penalties: First {num_months} Months of Term"
+plt_title = f"PHMSA Collected Penalties: Biden 2021 vs Trump 2025"
 plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Total Collected Penalties ($)")
@@ -163,7 +205,7 @@ for ax, pres in zip(axes, ["Biden 2021", "Trump 2025"]):
     ax.set_xticks(month_range)
     ax.set_xticklabels(month_labels)
     ax.set_ylabel("Penalty Amount ($)")
-    ax.set_ylim(0, None)
+    ax.set_ylim(0, None, auto=True)
     ax.legend(title="Penalty Type")
 
 plt_title = "Monthly Penalties: Proposed, Assessed, Collected"
@@ -203,7 +245,6 @@ filled_cases = pd.concat(filled_cases_list, ignore_index=True)
 # PLOT INCIDENT REPORTS
 # ------------------------------
 custom_palette = {"Biden 2021": "#1f77b4", "Trump 2025": "#d62728"}
-month_labels = [f"{i}\n{calendar.month_abbr[i]}" for i in month_range]
 
 sns.lineplot(
     data=filled_cases,
@@ -213,7 +254,7 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt_title = f"PHMSA Cases with Incident Reports: First {num_months} Months of Term"
+plt_title = f"PHMSA Cases with Incident Reports: Biden 2021 vs Trump 2025"
 plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Number of Cases")
@@ -246,7 +287,7 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt_title = f"PHMSA Collected Penalties (Cumulative): First {num_months} Months of Term"
+plt_title = f"PHMSA Collected Penalties (Cumulative): Biden 2021 vs Trump 2025"
 plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Cumulative Collected Penalties ($)")
@@ -279,7 +320,7 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt_title = f"PHMSA Enforcement Cases Opened (Cumulative): First {num_months} Months of Term"
+plt_title = f"PHMSA Enforcement Cases Opened (Cumulative): Biden 2021 vs Trump 2025"
 plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Number of Cases Opened (Cumulative)")
@@ -325,7 +366,6 @@ filled_cases["Cumulative_Incidents"] = (
 # PLOT CUMULATIVE INCIDENT REPORTS
 # ------------------------------
 custom_palette = {"Biden 2021": "#1f77b4", "Trump 2025": "#d62728"}
-month_labels = [f"{i}\n{calendar.month_abbr[i]}" for i in month_range]
 
 sns.lineplot(
     data=filled_cases,
@@ -335,7 +375,7 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt_title = f"PHMSA Cases with Incident Reports (Cumulative): First {num_months} Months of Term"
+plt_title = f"PHMSA Cases with Incident Reports (Cumulative): Biden 2021 vs Trump 2025"
 plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Cumulative Number of Incident Reports")
@@ -398,7 +438,7 @@ for ax, pres in zip(axes, ["Biden 2021", "Trump 2025"]):
     ax.set_xticks(month_range)
     ax.set_xticklabels(month_labels)
     ax.set_ylabel("Cumulative Penalty Amount ($)")
-    ax.set_ylim(0, None)
+    ax.set_ylim(0, None, auto=True)
     ax.legend(title="Penalty Type")
 
 plt_title = "Cumulative Penalties: Proposed, Assessed, Collected"
