@@ -1,9 +1,11 @@
 import matplotlib
 import pandas as pd
 from pyfonts import load_google_font
+from matplotlib.ticker import ScalarFormatter
 import seaborn as sns
 import matplotlib.pyplot as plt
 import calendar
+import numpy as np
 import os
 import datetime
 
@@ -233,7 +235,7 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt_title = f"PHMSA Enforcement Cases Opened: Historical Average vs Trump 2025"
+plt_title = f"PHMSA Enforcement Cases Opened Since Inauguration: Historical Average vs Trump 2025"
 plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Number of Cases Opened")
@@ -270,7 +272,7 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt_title = f"PHMSA Collected Penalties: Historical Average vs Trump 2025"
+plt_title = f"PHMSA Collected Penalties Since Inauguration: Historical Average vs Trump 2025"
 plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Total Collected Penalties ($)")
@@ -325,7 +327,7 @@ for ax, pres in zip(axes, ["Historical Average", "Trump 2025"]):
     ax.set_ylim(0, None, auto=True)
     ax.legend(title="Penalty Type")
 
-plt_title = "Monthly Penalties: Proposed, Assessed, Collected - Historical vs Trump 2025"
+plt_title = "Monthly Penalties: Proposed, Assessed, Collected Since Inauguration - Historical vs Trump 2025"
 plt.suptitle(plt_title, fontsize=16)
 plt.tight_layout(rect=[0,0,1,0.95])
 save_plt_as_image(plt_title)
@@ -396,7 +398,7 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt_title = f"PHMSA Cases with Incident Reports: Historical Average vs Trump 2025"
+plt_title = f"PHMSA Cases with Incident Reports Since Inauguration: Historical Average vs Trump 2025"
 plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Number of Cases")
@@ -440,7 +442,7 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt_title = f"PHMSA Collected Penalties (Cumulative): Historical Average vs Trump 2025"
+plt_title = f"PHMSA Collected Penalties (Cumulative Since Inauguration): Historical Average vs Trump 2025"
 plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Cumulative Collected Penalties ($)")
@@ -482,7 +484,7 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt_title = f"PHMSA Enforcement Cases Opened (Cumulative): Historical Average vs Trump 2025"
+plt_title = f"PHMSA Enforcement Cases Opened (Cumulative Since Inauguration): Historical Average vs Trump 2025"
 plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Number of Cases Opened (Cumulative)")
@@ -560,7 +562,7 @@ sns.lineplot(
     palette=custom_palette,
     marker="o"
 )
-plt_title = f"PHMSA Cases with Incident Reports (Cumulative): Historical Average vs Trump 2025"
+plt_title = f"PHMSA Cases with Incident Reports (Cumulative Since Inauguration): Historical Average vs Trump 2025"
 plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Cumulative Number of Incident Reports")
@@ -615,14 +617,34 @@ for ax, pres in zip(axes, ["Historical Average", "Trump 2025"]):
         marker="o",
         ax=ax
     )
+     
+    month_labels = ["Jan","Feb","Mar","Apr","May","Jun",
+               "Jul","Aug","Sep","Oct","Nov","Dec"]
+
     ax.set_title(pres)
-    ax.set_xticks(month_range)
-    ax.set_xticklabels(month_labels)
+    step = 1  # could use something else, like every 3 months
+
+    ticks = np.arange(1, max(month_range) + 1, step)
+    labels = [month_labels[(i-1) % 12] for i in ticks]
+
+    ax.set_xticks(ticks)
+    ax.set_xticklabels(labels)
+    ax.set_title(pres)
+    #ax.set_xticks(month_range)
+    #ax.set_xticklabels(month_labels)
     ax.set_ylabel("Cumulative Penalty Amount ($)")
     ax.set_ylim(0, None, auto=True)
     ax.legend(title="Penalty Type")
 
-plt_title = "Cumulative Penalties: Proposed, Assessed, Collected - Historical vs Trump 2025"
+
+formatter = ScalarFormatter()
+formatter.set_scientific(False)
+plt.gca().yaxis.set_major_formatter(formatter)
+
+# Format y-axis labels in millions
+plt.gca().set_yticklabels([f'${int(y * 1e-6)} Million' for y in plt.gca().get_yticks()])
+
+plt_title = "Cumulative Penalties Since Inauguration: Proposed, Assessed, Collected  - Historical vs Trump 2025"
 plt.suptitle(plt_title, fontsize=16)
 plt.tight_layout(rect=[0,0,1,0.95])
 save_plt_as_image(plt_title)

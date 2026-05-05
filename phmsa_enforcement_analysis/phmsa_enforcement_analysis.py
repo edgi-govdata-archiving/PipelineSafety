@@ -3,6 +3,7 @@ import pandas as pd
 from pyfonts import load_google_font
 import seaborn as sns
 import matplotlib.pyplot as plt
+from matplotlib.ticker import ScalarFormatter
 import calendar
 import os
 
@@ -445,6 +446,14 @@ for ax, pres in zip(axes, ["Biden 2021", "Trump 2025"]):
     ax.set_ylabel("Cumulative Penalty Amount ($)")
     ax.set_ylim(0, None, auto=True)
     ax.legend(title="Penalty Type")
+    # Set formatter to disable scientific notation
+
+formatter = ScalarFormatter()
+formatter.set_scientific(False)
+plt.gca().yaxis.set_major_formatter(formatter)
+
+# Format y-axis labels in millions
+plt.gca().set_yticklabels([f'${int(y * 1e-6)} Million' for y in plt.gca().get_yticks()])
 
 plt_title = "Cumulative Penalties: Proposed, Assessed, Collected"
 plt.suptitle(plt_title, fontsize=16)
