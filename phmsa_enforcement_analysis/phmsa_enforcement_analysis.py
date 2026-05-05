@@ -10,12 +10,18 @@ output_dir = os.path.join("phmsa_enforcement_analysis", "Images")
 # Create Images folder if it doesn't exist
 os.makedirs(output_dir, exist_ok=True)
 
+if os.getenv("GITHUB_ACTIONS"):
+    matplotlib.use("Agg")
+
 def save_plt_as_image(plt_title):
     # Remove unsafe filename characters
     safe_title = "".join(c for c in plt_title if c.isalnum() or c in " _-")
     output_path = os.path.join(output_dir, safe_title + ".png")
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
     print(f"Saved '{safe_title}' image to: {output_path}")
+    if not os.getenv("GITHUB_ACTIONS"):
+        plt.show()
+    plt.close()
 
 # ------------------------------
 # LOAD DATA
@@ -137,7 +143,6 @@ plt.ylabel("Number of Cases Opened")
 plt.xticks(month_range, labels=month_labels)
 plt.ylim(0, None)
 save_plt_as_image(plt_title)
-plt.show()
 
 # ------------------------------
 # COLLECTED PENALTIES PER MONTH
@@ -164,7 +169,7 @@ plt.ylabel("Total Collected Penalties ($)")
 plt.xticks(month_range, labels=month_labels)
 plt.ylim(0, None)
 save_plt_as_image(plt_title)
-plt.show()
+
 
 # ------------------------------
 # PENALTY COMPARISON (Proposed, Assessed, Collected)
@@ -212,7 +217,7 @@ plt_title = "Monthly Penalties: Proposed, Assessed, Collected"
 plt.suptitle(plt_title, fontsize=16)
 plt.tight_layout(rect=[0,0,1,0.95])
 save_plt_as_image(plt_title)
-plt.show()
+
 
 #------------------------------------------------------------------------------------
 # FREQUENCY OF INCIDENT REPORTS
@@ -261,7 +266,7 @@ plt.ylabel("Number of Cases")
 plt.xticks(ticks=month_range, labels=month_labels)
 plt.ylim(0, None)
 save_plt_as_image(plt_title)
-plt.show()
+
 
 # ------------------------------
 # ROLLING CUMULATIVE PENALTIES
@@ -294,7 +299,7 @@ plt.ylabel("Cumulative Collected Penalties ($)")
 plt.xticks(month_range, labels=month_labels)
 plt.ylim(0, None)
 save_plt_as_image(plt_title)
-plt.show()
+
 
 #---------------------------------
 # CUMULATIVE MONTHLY CASES OPENED
@@ -327,7 +332,7 @@ plt.ylabel("Number of Cases Opened (Cumulative)")
 plt.xticks(month_range, labels=month_labels)
 plt.ylim(0, None)
 save_plt_as_image(plt_title)
-plt.show()
+
 
 #------------------------------------------------------------------------------------
 # CUMULATIVE INCIDENT REPORTS
@@ -382,7 +387,7 @@ plt.ylabel("Cumulative Number of Incident Reports")
 plt.xticks(ticks=month_range, labels=month_labels)
 plt.ylim(0, None)
 save_plt_as_image(plt_title)
-plt.show()
+
 
 # ------------------------------
 # CUMULATIVE PENALTY COMPARISON
@@ -445,4 +450,4 @@ plt_title = "Cumulative Penalties: Proposed, Assessed, Collected"
 plt.suptitle(plt_title, fontsize=16)
 plt.tight_layout(rect=[0,0,1,0.95])
 save_plt_as_image(plt_title)
-plt.show()
+
