@@ -1,22 +1,24 @@
+from matplotlib.ticker import FuncFormatter
 import matplotlib
 import pandas as pd
 from pyfonts import load_google_font
-from matplotlib.ticker import ScalarFormatter
 import seaborn as sns
 import matplotlib.pyplot as plt
 import calendar
-import numpy as np
 import os
 import datetime
 
 # ------------------------------
 # SETUP: OUTPUT DIRECTORY
 # ------------------------------
-output_dir = os.path.join("phmsa_enforcement_analysis", "Images", "Historical Comparison")
+output_dir = os.path.join(
+    "phmsa_enforcement_analysis", "Images", "Historical Comparison"
+)
 os.makedirs(output_dir, exist_ok=True)
 
 if os.getenv("GITHUB_ACTIONS"):
     matplotlib.use("Agg")
+
 
 # ------------------------------
 # HELPER: SAVE PLOT AS IMAGE
@@ -31,13 +33,26 @@ def save_plt_as_image(plt_title):
         plt.show()
     plt.close()
 
+
+def millions_formatter(x, pos):
+    # Formats as e.g. $2.5 Million or $0
+    if x == 0:
+        return "$0"
+    return f"${x * 1e-6:.1f} Million".replace(".0", "")
+
+
+def thousands_formatter(x, pos):
+    # Formats with standard comma separators, e.g. $200,000 or $0
+    return f"${x:,.0f}"
+
+
 # ------------------------------
 # LOAD DATA
 # ------------------------------
 phmsa = pd.read_csv(
     r"phmsa_enforcement_analysis/Data/PHMSA Pipeline Enforcement Raw Data.txt",
     sep="\t",
-    encoding="latin1"
+    encoding="latin1",
 )
 
 # Convert Opened_Date to datetime
@@ -56,16 +71,20 @@ today = datetime.date.today()
 if today.month == 1:
     last_complete = pd.Timestamp(today.year - 1, 12, 31)
 else:
-    last_complete = pd.Timestamp(today.year, today.month - 1, 1) + pd.offsets.MonthEnd(0)
+    last_complete = pd.Timestamp(today.year, today.month - 1, 1) + pd.offsets.MonthEnd(
+        0
+    )
 
 # Define Trump 2025 analysis period
 trump_start = pd.Timestamp("2025-01-20")
 trump_end = min(last_complete, latest_date)
 
 # Calculate number of months for Trump 2025 (used for aligning all presidents)
-num_months = (trump_end.year - trump_start.year) * 12 + (trump_end.month - trump_start.month) + 1
+num_months = (
+    (trump_end.year - trump_start.year) * 12 + (trump_end.month - trump_start.month) + 1
+)
 
-custom_palette = {"Historical Average": "#1f77b4", "Trump 2025": "#d62728"}
+custom_palette = {"Historical Average": "#a5cd90", "Trump 2025": "#2c3172"}
 
 # ------------------------------
 # HISTORICAL AVERAGE CALCULATION
@@ -73,42 +92,68 @@ custom_palette = {"Historical Average": "#1f77b4", "Trump 2025": "#d62728"}
 # Define presidential terms (start date, actual data start date)
 # Note: Bush term started 2001, but data only available from 2002
 presidential_terms = [
-    {"name": "Bush", "start": pd.Timestamp("2001-01-20"), "data_start": pd.Timestamp("2002-01-01")},
-    {"name": "Obama", "start": pd.Timestamp("2009-01-20"), "data_start": pd.Timestamp("2009-01-20")},
-    {"name": "Trump I", "start": pd.Timestamp("2017-01-20"), "data_start": pd.Timestamp("2017-01-20")},
-    {"name": "Biden", "start": pd.Timestamp("2021-01-20"), "data_start": pd.Timestamp("2021-01-20")},
+    {
+        "name": "Bush",
+        "start": pd.Timestamp("2001-01-20"),
+        "data_start": pd.Timestamp("2002-01-01"),
+    },
+    {
+        "name": "Obama",
+        "start": pd.Timestamp("2009-01-20"),
+        "data_start": pd.Timestamp("2009-01-20"),
+    },
+    {
+        "name": "Trump I",
+        "start": pd.Timestamp("2017-01-20"),
+        "data_start": pd.Timestamp("2017-01-20"),
+    },
+    {
+        "name": "Biden",
+        "start": pd.Timestamp("2021-01-20"),
+        "data_start": pd.Timestamp("2021-01-20"),
+    },
 ]
 
 # Calculate end dates for each term (N months from start)
 for term in presidential_terms:
-    term["end"] = term["start"] + pd.DateOffset(months=num_months - 1) + pd.offsets.MonthEnd(0)
+    term["end"] = (
+        term["start"] + pd.DateOffset(months=num_months - 1) + pd.offsets.MonthEnd(0)
+    )
 
 # Filter data for each previous president (first N months of their term)
 previous_presidents_data = []
 for term in presidential_terms:
     # Use max of term start and data availability start
     actual_start = max(term["start"], term["data_start"])
-    term_data = phmsa[(phmsa["Opened_Date"] >= actual_start) & 
-                      (phmsa["Opened_Date"] <= term["end"])].copy()
-    
+    term_data = phmsa[
+        (phmsa["Opened_Date"] >= actual_start) & (phmsa["Opened_Date"] <= term["end"])
+    ].copy()
+
     if len(term_data) > 0:
         # Calculate month-in-term (1-indexed)
-        term_data["Month"] = ((term_data["Opened_Date"].dt.year - term["start"].year) * 12 + 
-                              (term_data["Opened_Date"].dt.month - term["start"].month) + 1)
+        term_data["Month"] = (
+            (term_data["Opened_Date"].dt.year - term["start"].year) * 12
+            + (term_data["Opened_Date"].dt.month - term["start"].month)
+            + 1
+        )
         term_data["President"] = term["name"]
         previous_presidents_data.append(term_data)
 
 # Filter Trump 2025 data
-phmsa_trump2025 = phmsa[(phmsa["Opened_Date"] >= trump_start) & 
-                         (phmsa["Opened_Date"] <= trump_end)].copy()
-phmsa_trump2025["Month"] = ((phmsa_trump2025["Opened_Date"].dt.year - trump_start.year) * 12 + 
-                             (phmsa_trump2025["Opened_Date"].dt.month - trump_start.month) + 1)
+phmsa_trump2025 = phmsa[
+    (phmsa["Opened_Date"] >= trump_start) & (phmsa["Opened_Date"] <= trump_end)
+].copy()
+phmsa_trump2025["Month"] = (
+    (phmsa_trump2025["Opened_Date"].dt.year - trump_start.year) * 12
+    + (phmsa_trump2025["Opened_Date"].dt.month - trump_start.month)
+    + 1
+)
 phmsa_trump2025["President"] = "Trump 2025"
 
 # Calculate HISTORICAL AVERAGE with dynamic president count per month
 if previous_presidents_data:
     all_prev_data = pd.concat(previous_presidents_data, ignore_index=True)
-    
+
     # Helper function to calculate average with variable number of presidents per month
     def calculate_historical_average(df, value_cols):
         """
@@ -117,7 +162,7 @@ if previous_presidents_data:
         """
         # Group by President and Month, sum the values
         grouped = df.groupby(["President", "Month"])[value_cols].sum().reset_index()
-        
+
         # For each month, average across all presidents that have data for that month
         result_rows = []
         for month in range(1, num_months + 1):
@@ -127,27 +172,32 @@ if previous_presidents_data:
                 for col in value_cols:
                     avg_row[col] = month_data[col].mean()
                 result_rows.append(avg_row)
-        
+
         return pd.DataFrame(result_rows)
-    
+
     # Create averaged dataset for comparisons
-    historical_avg = calculate_historical_average(all_prev_data, 
-                                                   ["Proposed_Penalties", "Assessed_Penalties", 
-                                                    "Collected_Penalties"])
-    
+    historical_avg = calculate_historical_average(
+        all_prev_data,
+        ["Proposed_Penalties", "Assessed_Penalties", "Collected_Penalties"],
+    )
+
     # For counts, handle separately with same logic
-    counts_grouped = all_prev_data.groupby(["President", "Month"]).size().reset_index(name="Count")
+    counts_grouped = (
+        all_prev_data.groupby(["President", "Month"]).size().reset_index(name="Count")
+    )
     count_avg_rows = []
     for month in range(1, num_months + 1):
         month_data = counts_grouped[counts_grouped["Month"] == month]
         if len(month_data) > 0:
-            count_avg_rows.append({
-                "Month": month, 
-                "President": "Historical Average",
-                "Count": month_data["Count"].mean()
-            })
+            count_avg_rows.append(
+                {
+                    "Month": month,
+                    "President": "Historical Average",
+                    "Count": month_data["Count"].mean(),
+                }
+            )
     avg_counts = pd.DataFrame(count_avg_rows)
-    
+
 else:
     historical_avg = pd.DataFrame()
     avg_counts = pd.DataFrame()
@@ -160,30 +210,34 @@ month_range = range(1, num_months + 1)
 month_labels = []
 for i in month_range:
     month_idx = (trump_start.month + i - 2) % 12 + 1
-    month_labels.append(f"{i}\n{calendar.month_abbr[month_idx]}")
+    month_labels.append(f"{calendar.month_abbr[month_idx]}")
 
 # ------------------------------
 # SETTINGS
 # ------------------------------
 # Simple list versions of the gradients, which we can use for seaborn color palettes:
-bicolor_standard_list = ["#19659e", "#dbbe48", "#A74956"]
-sns.set_theme(style="whitegrid", palette=bicolor_standard_list)
+bicolor_standard_list = ["#53ADA4", "#C97C08", "#A74956"]
+sns.set_theme(
+    style="whitegrid",
+    palette=bicolor_standard_list,
+)
 
 # ------------------------------
 # FONT SETTINGS
 # ------------------------------
 
-# Get Mona Sans font from Google Fonts. 
+# Get Mona Sans font from Google Fonts.
 # URL: https://fonts.google.com/specimen/Mona+Sans
-font_path_regular = load_google_font("Mona Sans", weight='regular')
-font_path_bold = load_google_font("Mona Sans", weight='bold')
+font_path_regular = load_google_font("Mona Sans", weight="regular")
+font_path_bold = load_google_font("Mona Sans", weight="bold")
 matplotlib.font_manager.fontManager.addfont(font_path_regular.get_file())
 matplotlib.font_manager.fontManager.addfont(font_path_bold.get_file())
 
+
 # Helper function to set matplotlib fonts to our chosen font. This needs to be called AFTER sns.set_theme() is called,
 # hence this helper function to make that quick every time we graph something.
-def set_matplotlib_font(style = "regular"):
-    plt.rcParams["font.family"] = 'sans-serif'
+def set_matplotlib_font(style="regular"):
+    plt.rcParams["font.family"] = "sans-serif"
     if style == "regular":
         plt.rcParams["font.sans-serif"] = font_path_regular.get_name()
         sns.set_context("notebook", rc={"font.family": font_path_regular.get_name()})
@@ -191,7 +245,9 @@ def set_matplotlib_font(style = "regular"):
         plt.rcParams["font.sans-serif"] = font_path_bold.get_name()
         sns.set_context("notebook", rc={"font.family": font_path_bold.get_name()})
 
+
 set_matplotlib_font("regular")
+
 
 # ------------------------------
 # HELPER TO FILL MISSING MONTHS
@@ -201,11 +257,13 @@ def add_missing_months(df, value_col):
     df = months.merge(df, on="Month", how="left").fillna({value_col: 0})
     return df
 
+
 def fill_penalty_months(df, president):
     months = pd.DataFrame({"Month": month_range})
     df = months.merge(df, on="Month", how="left").fillna(0)
     df["President"] = president
     return df
+
 
 # ------------------------------
 # CASES OPENED PER MONTH
@@ -215,7 +273,9 @@ if not avg_counts.empty:
     avg_counts_filled = add_missing_months(avg_counts, "Count")
 else:
     # Create empty dataframe with all months
-    avg_counts_filled = pd.DataFrame({"Month": month_range, "Count": 0, "President": "Historical Average"})
+    avg_counts_filled = pd.DataFrame(
+        {"Month": month_range, "Count": 0, "President": "Historical Average"}
+    )
 
 # Trump 2025 counts
 monthly_counts_trump = phmsa_trump2025.groupby("Month").size().reset_index(name="Count")
@@ -233,14 +293,17 @@ sns.lineplot(
     y="Count",
     hue="President",
     palette=custom_palette,
-    marker="o"
+    marker="o",
 )
 plt_title = f"PHMSA Enforcement Cases Opened Since Inauguration: Historical Average vs Trump 2025"
-plt.title(plt_title)
+# plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Number of Cases Opened")
-plt.xticks(month_range, labels=month_labels)
+plt.xticks(month_range, labels=month_labels, fontsize=8)
 plt.ylim(0, None)
+plt.axvline(x=13, color="#000000", linestyle="--", linewidth=2.5, alpha=0.7, zorder=1)
+plt.legend(loc="upper center", bbox_to_anchor=(0.45, -0.12), ncol=2, frameon=False)
+plt.tight_layout()
 save_plt_as_image(plt_title)
 
 # ------------------------------
@@ -252,16 +315,28 @@ if not historical_avg.empty:
     avg_collected_filled = add_missing_months(avg_collected, "Collected_Penalties")
     avg_collected_filled["President"] = "Historical Average"
 else:
-    avg_collected_filled = pd.DataFrame({"Month": month_range, "Collected_Penalties": 0, "President": "Historical Average"})
+    avg_collected_filled = pd.DataFrame(
+        {
+            "Month": month_range,
+            "Collected_Penalties": 0,
+            "President": "Historical Average",
+        }
+    )
 
 # Trump 2025 collected penalties
-monthly_collected_trump = phmsa_trump2025.groupby("Month")["Collected_Penalties"].sum().reset_index()
+monthly_collected_trump = (
+    phmsa_trump2025.groupby("Month")["Collected_Penalties"].sum().reset_index()
+)
 monthly_collected_trump["President"] = "Trump 2025"
-trump_collected_filled = add_missing_months(monthly_collected_trump, "Collected_Penalties")
+trump_collected_filled = add_missing_months(
+    monthly_collected_trump, "Collected_Penalties"
+)
 trump_collected_filled["President"] = "Trump 2025"
 
 # Combine
-filled_collected = pd.concat([avg_collected_filled, trump_collected_filled], ignore_index=True)
+filled_collected = pd.concat(
+    [avg_collected_filled, trump_collected_filled], ignore_index=True
+)
 
 # Plot
 sns.lineplot(
@@ -270,14 +345,20 @@ sns.lineplot(
     y="Collected_Penalties",
     hue="President",
     palette=custom_palette,
-    marker="o"
+    marker="o",
 )
-plt_title = f"PHMSA Collected Penalties Since Inauguration: Historical Average vs Trump 2025"
-plt.title(plt_title)
+plt_title = (
+    f"PHMSA Collected Penalties Since Inauguration: Historical Average vs Trump 2025"
+)
+# plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Total Collected Penalties ($)")
-plt.xticks(month_range, labels=month_labels)
+plt.xticks(month_range, labels=month_labels, fontsize=8)
 plt.ylim(0, None)
+plt.gca().yaxis.set_major_formatter(FuncFormatter(thousands_formatter))
+plt.axvline(x=13, color="#000000", linestyle="--", linewidth=2.5, alpha=0.7, zorder=1)
+plt.legend(loc="upper center", bbox_to_anchor=(0.45, -0.12), ncol=2, frameon=False)
+plt.tight_layout()
 save_plt_as_image(plt_title)
 
 # ------------------------------
@@ -293,25 +374,34 @@ else:
         Proposed_Penalties=0,
         Assessed_Penalties=0,
         Collected_Penalties=0,
-        President="Historical Average"
+        President="Historical Average",
     )
 
 # Trump 2025 penalties
-penalties_trump = phmsa_trump2025.groupby("Month")[["Proposed_Penalties","Assessed_Penalties","Collected_Penalties"]].sum().reset_index()
+penalties_trump = (
+    phmsa_trump2025.groupby("Month")[
+        ["Proposed_Penalties", "Assessed_Penalties", "Collected_Penalties"]
+    ]
+    .sum()
+    .reset_index()
+)
 trump_penalties_filled = fill_penalty_months(penalties_trump, "Trump 2025")
 
 # Combine and melt for plotting
-penalties_long = pd.concat([avg_penalties_filled, trump_penalties_filled], ignore_index=True).melt(
+penalties_long = pd.concat(
+    [avg_penalties_filled, trump_penalties_filled], ignore_index=True
+).melt(
     id_vars=["President", "Month"],
-    value_vars=["Proposed_Penalties","Assessed_Penalties","Collected_Penalties"],
+    value_vars=["Proposed_Penalties", "Assessed_Penalties", "Collected_Penalties"],
     var_name="Penalty_Type",
-    value_name="Amount"
+    value_name="Amount",
 )
+penalties_long["Penalty_Type"] = penalties_long["Penalty_Type"].str.replace("_", " ")
 
 # Plot
 fig, axes = plt.subplots(1, 2, figsize=(14, 5), sharey=True)
 for ax, pres in zip(axes, ["Historical Average", "Trump 2025"]):
-    subset = penalties_long[penalties_long["President"]==pres]
+    subset = penalties_long[penalties_long["President"] == pres]
     sns.lineplot(
         data=subset,
         x="Month",
@@ -322,27 +412,42 @@ for ax, pres in zip(axes, ["Historical Average", "Trump 2025"]):
     )
     ax.set_title(pres)
     ax.set_xticks(month_range)
-    ax.set_xticklabels(month_labels)
+    ax.set_xticklabels(month_labels, fontsize=8)
     ax.set_ylabel("Penalty Amount ($)")
     ax.set_ylim(0, None, auto=True)
-    ax.legend(title="Penalty Type")
+    ax.axvline(
+        x=13, color="#000000", linestyle="--", linewidth=2.5, alpha=0.7, zorder=1
+    )
+    ax.yaxis.set_major_formatter(FuncFormatter(millions_formatter))
+    ax.get_legend().remove()
 
+plt.tight_layout()
+fig.subplots_adjust(bottom=0.18)
+# Collect legend and make into one legend for the whole figure:
+handles, labels = axes[0].get_legend_handles_labels()
+fig.legend(
+    handles,
+    labels,
+    loc="lower center",
+    bbox_to_anchor=(0.5, -0.02),
+    ncol=3,
+    frameon=False,
+)
 plt_title = "Monthly Penalties: Proposed, Assessed, Collected Since Inauguration - Historical vs Trump 2025"
-plt.suptitle(plt_title, fontsize=16)
-plt.tight_layout(rect=[0,0,1,0.95])
+# plt.suptitle(plt_title, fontsize=16)
 save_plt_as_image(plt_title)
 
-#------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
 # FREQUENCY OF INCIDENT REPORTS
-#------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
 # Filter valid reports for Trump 2025
-phmsa_valid_trump = phmsa_trump2025[phmsa_trump2025["Report_Type"].notna() & (phmsa_trump2025["Report_Type"] != "")]
+phmsa_valid_trump = phmsa_trump2025[
+    phmsa_trump2025["Report_Type"].notna() & (phmsa_trump2025["Report_Type"] != "")
+]
 
 # Group by month for Trump 2025
 monthly_cases_trump = (
-    phmsa_valid_trump.groupby("Month")
-    .size()
-    .reset_index(name="Cases")
+    phmsa_valid_trump.groupby("Month").size().reset_index(name="Cases")
 )
 monthly_cases_trump["President"] = "Trump 2025"
 monthly_cases_trump["Year"] = 2025
@@ -350,22 +455,28 @@ monthly_cases_trump["Year"] = 2025
 # Historical average for incident reports
 if previous_presidents_data:
     all_prev_valid = pd.concat(previous_presidents_data, ignore_index=True)
-    all_prev_valid = all_prev_valid[all_prev_valid["Report_Type"].notna() & (all_prev_valid["Report_Type"] != "")]
-    
+    all_prev_valid = all_prev_valid[
+        all_prev_valid["Report_Type"].notna() & (all_prev_valid["Report_Type"] != "")
+    ]
+
     # Group by President and Month
-    prev_cases_grouped = all_prev_valid.groupby(["President", "Month"]).size().reset_index(name="Cases")
-    
+    prev_cases_grouped = (
+        all_prev_valid.groupby(["President", "Month"]).size().reset_index(name="Cases")
+    )
+
     # Average across presidents for each month
     avg_cases_rows = []
     for month in range(1, num_months + 1):
         month_data = prev_cases_grouped[prev_cases_grouped["Month"] == month]
         if len(month_data) > 0:
-            avg_cases_rows.append({
-                "Month": month,
-                "President": "Historical Average",
-                "Cases": month_data["Cases"].mean(),
-                "Year": None  # Placeholder
-            })
+            avg_cases_rows.append(
+                {
+                    "Month": month,
+                    "President": "Historical Average",
+                    "Cases": month_data["Cases"].mean(),
+                    "Year": None,  # Placeholder
+                }
+            )
     avg_cases = pd.DataFrame(avg_cases_rows)
 else:
     avg_cases = pd.DataFrame()
@@ -378,7 +489,9 @@ if not avg_cases.empty:
     filled_avg["Cases"] = filled_avg["Cases"].fillna(0)
     filled_avg["President"] = "Historical Average"
 else:
-    filled_avg = all_months_df.assign(Cases=0, President="Historical Average", Year=None)
+    filled_avg = all_months_df.assign(
+        Cases=0, President="Historical Average", Year=None
+    )
 
 # Fill Trump 2025 data
 filled_trump = all_months_df.merge(monthly_cases_trump, on="Month", how="left")
@@ -396,14 +509,17 @@ sns.lineplot(
     y="Cases",
     hue="President",
     palette=custom_palette,
-    marker="o"
+    marker="o",
 )
 plt_title = f"PHMSA Cases with Incident Reports Since Inauguration: Historical Average vs Trump 2025"
-plt.title(plt_title)
+# plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Number of Cases")
-plt.xticks(ticks=month_range, labels=month_labels)
+plt.xticks(ticks=month_range, labels=month_labels, fontsize=8)
 plt.ylim(0, None)
+plt.axvline(x=13, color="#000000", linestyle="--", linewidth=2.5, alpha=0.7, zorder=1)
+plt.legend(loc="upper center", bbox_to_anchor=(0.45, -0.12), ncol=2, frameon=False)
+plt.tight_layout()
 save_plt_as_image(plt_title)
 
 # ------------------------------
@@ -415,23 +531,33 @@ if not historical_avg.empty:
     avg_collected_filled = add_missing_months(avg_collected, "Collected_Penalties")
     avg_collected_filled["President"] = "Historical Average"
 else:
-    avg_collected_filled = pd.DataFrame({"Month": month_range, "Collected_Penalties": 0, "President": "Historical Average"})
+    avg_collected_filled = pd.DataFrame(
+        {
+            "Month": month_range,
+            "Collected_Penalties": 0,
+            "President": "Historical Average",
+        }
+    )
 
 # Trump 2025 cumulative
-monthly_collected_trump = phmsa_trump2025.groupby("Month")["Collected_Penalties"].sum().reset_index()
+monthly_collected_trump = (
+    phmsa_trump2025.groupby("Month")["Collected_Penalties"].sum().reset_index()
+)
 monthly_collected_trump["President"] = "Trump 2025"
-trump_collected_filled = add_missing_months(monthly_collected_trump, "Collected_Penalties")
+trump_collected_filled = add_missing_months(
+    monthly_collected_trump, "Collected_Penalties"
+)
 trump_collected_filled["President"] = "Trump 2025"
 
 # Combine
-filled_collected = pd.concat([avg_collected_filled, trump_collected_filled], ignore_index=True)
+filled_collected = pd.concat(
+    [avg_collected_filled, trump_collected_filled], ignore_index=True
+)
 
 # Calculate cumulative
-filled_collected["Cumulative_Penalties"] = (
-    filled_collected
-    .groupby("President")["Collected_Penalties"]
-    .cumsum()
-)
+filled_collected["Cumulative_Penalties"] = filled_collected.groupby("President")[
+    "Collected_Penalties"
+].cumsum()
 
 # Plot
 sns.lineplot(
@@ -440,24 +566,30 @@ sns.lineplot(
     y="Cumulative_Penalties",
     hue="President",
     palette=custom_palette,
-    marker="o"
+    marker="o",
 )
 plt_title = f"PHMSA Collected Penalties (Cumulative Since Inauguration): Historical Average vs Trump 2025"
-plt.title(plt_title)
+# plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Cumulative Collected Penalties ($)")
-plt.xticks(month_range, labels=month_labels)
+plt.xticks(month_range, labels=month_labels, fontsize=8)
 plt.ylim(0, None)
+plt.gca().yaxis.set_major_formatter(FuncFormatter(millions_formatter))
+plt.axvline(x=13, color="#000000", linestyle="--", linewidth=2.5, alpha=0.7, zorder=1)
+plt.legend(loc="upper center", bbox_to_anchor=(0.45, -0.12), ncol=2, frameon=False)
+plt.tight_layout()
 save_plt_as_image(plt_title)
 
-#---------------------------------
+# ---------------------------------
 # CUMULATIVE MONTHLY CASES OPENED
-#--------------------------------
+# --------------------------------
 # Historical average counts (reuse earlier data)
 if not avg_counts.empty:
     avg_counts_filled = add_missing_months(avg_counts, "Count")
 else:
-    avg_counts_filled = pd.DataFrame({"Month": month_range, "Count": 0, "President": "Historical Average"})
+    avg_counts_filled = pd.DataFrame(
+        {"Month": month_range, "Count": 0, "President": "Historical Average"}
+    )
 
 # Trump 2025 counts
 monthly_counts_trump = phmsa_trump2025.groupby("Month").size().reset_index(name="Count")
@@ -469,11 +601,9 @@ trump_counts_filled["President"] = "Trump 2025"
 filled_counts = pd.concat([avg_counts_filled, trump_counts_filled], ignore_index=True)
 
 # Calculate cumulative
-filled_counts["Cumulative_Counts"] = (
-    filled_counts
-    .groupby("President")["Count"]
-    .cumsum()
-)
+filled_counts["Cumulative_Counts"] = filled_counts.groupby("President")[
+    "Count"
+].cumsum()
 
 # Plot
 sns.lineplot(
@@ -482,27 +612,30 @@ sns.lineplot(
     y="Cumulative_Counts",
     hue="President",
     palette=custom_palette,
-    marker="o"
+    marker="o",
 )
 plt_title = f"PHMSA Enforcement Cases Opened (Cumulative Since Inauguration): Historical Average vs Trump 2025"
-plt.title(plt_title)
+# plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Number of Cases Opened (Cumulative)")
-plt.xticks(month_range, labels=month_labels)
+plt.xticks(month_range, labels=month_labels, fontsize=8)
 plt.ylim(0, None)
+plt.axvline(x=13, color="#000000", linestyle="--", linewidth=2.5, alpha=0.7, zorder=1)
+plt.legend(loc="upper center", bbox_to_anchor=(0.45, -0.12), ncol=2, frameon=False)
+plt.tight_layout()
 save_plt_as_image(plt_title)
 
-#------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
 # CUMULATIVE INCIDENT REPORTS
-#------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
 # Filter valid reports for Trump 2025 (reuse earlier data)
-phmsa_valid_trump = phmsa_trump2025[phmsa_trump2025["Report_Type"].notna() & (phmsa_trump2025["Report_Type"] != "")]
+phmsa_valid_trump = phmsa_trump2025[
+    phmsa_trump2025["Report_Type"].notna() & (phmsa_trump2025["Report_Type"] != "")
+]
 
 # Group by month for Trump 2025
 monthly_cases_trump = (
-    phmsa_valid_trump.groupby("Month")
-    .size()
-    .reset_index(name="Cases")
+    phmsa_valid_trump.groupby("Month").size().reset_index(name="Cases")
 )
 monthly_cases_trump["President"] = "Trump 2025"
 monthly_cases_trump["Year"] = 2025
@@ -510,19 +643,25 @@ monthly_cases_trump["Year"] = 2025
 # Historical average for incident reports (reuse earlier logic)
 if previous_presidents_data:
     all_prev_valid = pd.concat(previous_presidents_data, ignore_index=True)
-    all_prev_valid = all_prev_valid[all_prev_valid["Report_Type"].notna() & (all_prev_valid["Report_Type"] != "")]
-    prev_cases_grouped = all_prev_valid.groupby(["President", "Month"]).size().reset_index(name="Cases")
-    
+    all_prev_valid = all_prev_valid[
+        all_prev_valid["Report_Type"].notna() & (all_prev_valid["Report_Type"] != "")
+    ]
+    prev_cases_grouped = (
+        all_prev_valid.groupby(["President", "Month"]).size().reset_index(name="Cases")
+    )
+
     avg_cases_rows = []
     for month in range(1, num_months + 1):
         month_data = prev_cases_grouped[prev_cases_grouped["Month"] == month]
         if len(month_data) > 0:
-            avg_cases_rows.append({
-                "Month": month,
-                "President": "Historical Average",
-                "Cases": month_data["Cases"].mean(),
-                "Year": None
-            })
+            avg_cases_rows.append(
+                {
+                    "Month": month,
+                    "President": "Historical Average",
+                    "Cases": month_data["Cases"].mean(),
+                    "Year": None,
+                }
+            )
     avg_cases = pd.DataFrame(avg_cases_rows)
 else:
     avg_cases = pd.DataFrame()
@@ -535,7 +674,9 @@ if not avg_cases.empty:
     filled_avg["Cases"] = filled_avg["Cases"].fillna(0)
     filled_avg["President"] = "Historical Average"
 else:
-    filled_avg = all_months_df.assign(Cases=0, President="Historical Average", Year=None)
+    filled_avg = all_months_df.assign(
+        Cases=0, President="Historical Average", Year=None
+    )
 
 # Fill Trump 2025 data
 filled_trump = all_months_df.merge(monthly_cases_trump, on="Month", how="left")
@@ -547,11 +688,9 @@ filled_trump["Year"] = 2025
 filled_cases = pd.concat([filled_avg, filled_trump], ignore_index=True)
 
 # Calculate cumulative
-filled_cases["Cumulative_Incidents"] = (
-    filled_cases
-    .groupby("President")["Cases"]
-    .cumsum()
-)
+filled_cases["Cumulative_Incidents"] = filled_cases.groupby("President")[
+    "Cases"
+].cumsum()
 
 # Plot
 sns.lineplot(
@@ -560,14 +699,17 @@ sns.lineplot(
     y="Cumulative_Incidents",
     hue="President",
     palette=custom_palette,
-    marker="o"
+    marker="o",
 )
 plt_title = f"PHMSA Cases with Incident Reports (Cumulative Since Inauguration): Historical Average vs Trump 2025"
-plt.title(plt_title)
+# plt.title(plt_title)
 plt.xlabel("Month")
 plt.ylabel("Cumulative Number of Incident Reports")
-plt.xticks(ticks=month_range, labels=month_labels)
+plt.xticks(ticks=month_range, labels=month_labels, fontsize=8)
 plt.ylim(0, None)
+plt.axvline(x=13, color="#000000", linestyle="--", linewidth=2.5, alpha=0.7, zorder=1)
+plt.legend(loc="upper center", bbox_to_anchor=(0.45, -0.12), ncol=2, frameon=False)
+plt.tight_layout()
 save_plt_as_image(plt_title)
 
 # ------------------------------
@@ -582,27 +724,34 @@ else:
         Proposed_Penalties=0,
         Assessed_Penalties=0,
         Collected_Penalties=0,
-        President="Historical Average"
+        President="Historical Average",
     )
 
 # Trump 2025 penalties
-penalties_trump = phmsa_trump2025.groupby("Month")[["Proposed_Penalties","Assessed_Penalties","Collected_Penalties"]].sum().reset_index()
+penalties_trump = (
+    phmsa_trump2025.groupby("Month")[
+        ["Proposed_Penalties", "Assessed_Penalties", "Collected_Penalties"]
+    ]
+    .sum()
+    .reset_index()
+)
 trump_penalties_filled = fill_penalty_months(penalties_trump, "Trump 2025")
 
 # Combine and melt
-penalties_long = pd.concat([avg_penalties_filled, trump_penalties_filled], ignore_index=True).melt(
+penalties_long = pd.concat(
+    [avg_penalties_filled, trump_penalties_filled], ignore_index=True
+).melt(
     id_vars=["President", "Month"],
-    value_vars=["Proposed_Penalties","Assessed_Penalties","Collected_Penalties"],
+    value_vars=["Proposed_Penalties", "Assessed_Penalties", "Collected_Penalties"],
     var_name="Penalty_Type",
-    value_name="Amount"
+    value_name="Amount",
 )
+penalties_long["Penalty_Type"] = penalties_long["Penalty_Type"].str.replace("_", " ")
 
 # Calculate cumulative
-penalties_long["Cumulative"] = (
-    penalties_long
-    .groupby(["President", "Penalty_Type"])["Amount"]
-    .cumsum()
-)
+penalties_long["Cumulative"] = penalties_long.groupby(["President", "Penalty_Type"])[
+    "Amount"
+].cumsum()
 
 # Plot
 fig, axes = plt.subplots(1, 2, figsize=(14, 5), sharey=True)
@@ -610,41 +759,32 @@ fig, axes = plt.subplots(1, 2, figsize=(14, 5), sharey=True)
 for ax, pres in zip(axes, ["Historical Average", "Trump 2025"]):
     subset = penalties_long[penalties_long["President"] == pres]
     sns.lineplot(
-        data=subset,
-        x="Month",
-        y="Cumulative",
-        hue="Penalty_Type",
-        marker="o",
-        ax=ax
+        data=subset, x="Month", y="Cumulative", hue="Penalty_Type", marker="o", ax=ax
     )
-     
-    month_labels = ["Jan","Feb","Mar","Apr","May","Jun",
-               "Jul","Aug","Sep","Oct","Nov","Dec"]
 
     ax.set_title(pres)
-    step = 1  # could use something else, like every 3 months
-
-    ticks = np.arange(1, max(month_range) + 1, step)
-    labels = [month_labels[(i-1) % 12] for i in ticks]
-
-    ax.set_xticks(ticks)
-    ax.set_xticklabels(labels)
-    ax.set_title(pres)
-    #ax.set_xticks(month_range)
-    #ax.set_xticklabels(month_labels)
+    ax.set_xticks(month_range)
+    ax.set_xticklabels(month_labels, fontsize=8)
     ax.set_ylabel("Cumulative Penalty Amount ($)")
     ax.set_ylim(0, None, auto=True)
-    ax.legend(title="Penalty Type")
+    ax.axvline(
+        x=13, color="#000000", linestyle="--", linewidth=2.5, alpha=0.7, zorder=1
+    )
+    ax.yaxis.set_major_formatter(FuncFormatter(millions_formatter))
+    ax.get_legend().remove()
 
-
-formatter = ScalarFormatter()
-formatter.set_scientific(False)
-plt.gca().yaxis.set_major_formatter(formatter)
-
-# Format y-axis labels in millions
-plt.gca().set_yticklabels([f'${int(y * 1e-6)} Million' for y in plt.gca().get_yticks()])
-
+plt.tight_layout()
+fig.subplots_adjust(bottom=0.18)
+# Collect legend and make into one legend for the whole figure:
+handles, labels = axes[0].get_legend_handles_labels()
+fig.legend(
+    handles,
+    labels,
+    loc="lower center",
+    bbox_to_anchor=(0.5, -0.02),
+    ncol=3,
+    frameon=False,
+)
 plt_title = "Cumulative Penalties Since Inauguration: Proposed, Assessed, Collected  - Historical vs Trump 2025"
-plt.suptitle(plt_title, fontsize=16)
-plt.tight_layout(rect=[0,0,1,0.95])
+# plt.suptitle(plt_title, fontsize=16)
 save_plt_as_image(plt_title)
