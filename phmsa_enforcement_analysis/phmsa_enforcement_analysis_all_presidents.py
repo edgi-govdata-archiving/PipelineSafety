@@ -228,8 +228,9 @@ sns.set_theme(
 
 # Get Mona Sans font from Google Fonts.
 # URL: https://fonts.google.com/specimen/Mona+Sans
-font_path_regular = load_google_font("Mona Sans", weight="regular")
-font_path_bold = load_google_font("Mona Sans", weight="bold")
+font_name = "Mona Sans"
+font_path_regular = load_google_font(font_name, weight="regular")
+font_path_bold = load_google_font(font_name, weight="bold")
 matplotlib.font_manager.fontManager.addfont(font_path_regular.get_file())
 matplotlib.font_manager.fontManager.addfont(font_path_bold.get_file())
 
@@ -239,11 +240,11 @@ matplotlib.font_manager.fontManager.addfont(font_path_bold.get_file())
 def set_matplotlib_font(style="regular"):
     plt.rcParams["font.family"] = "sans-serif"
     if style == "regular":
-        plt.rcParams["font.sans-serif"] = font_path_regular.get_name()
-        sns.set_context("notebook", rc={"font.family": font_path_regular.get_name()})
+        plt.rcParams["font.sans-serif"] = font_name
+        sns.set_context("notebook", rc={"font.family": font_name})
     elif style == "bold":
-        plt.rcParams["font.sans-serif"] = font_path_bold.get_name()
-        sns.set_context("notebook", rc={"font.family": font_path_bold.get_name()})
+        plt.rcParams["font.sans-serif"] = font_name
+        sns.set_context("notebook", rc={"font.family": font_name})
 
 
 set_matplotlib_font("regular")
